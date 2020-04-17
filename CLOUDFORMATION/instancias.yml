@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: "instancies demo para las redes publicas y privadas"
+
+Parameters:
+  KeyPair:
+    Description: ssh key para acceder a las ec2
+    Type: 'AWS::EC2::KeyPair::KeyName'
+  
+  TipoInstancia:
+    Description: tipo de ec2
+    Type: String
+    Default: t2.micro
+
+
+Mappings:
+  ltaAmis:
+    us-east-1:
+      amiec2: ami-0080e4c5bc078760e
+    us-east-2:
+      amiec2: ami-02f706d959cedf892
+
+Resources:
+  
+  ec2Publico: 
+    Type: AWS::EC2::Instance
+    Properties: 
+      ImageId: 
+        !FindInMap [ltaAmis, !Ref "AWS::Region", amiec2]
+      KeyName: 
+        !Ref KeyPair
+      InstanceType: 
+        !Ref TipoInstancia
+      SecurityGroupIds:
+        - !ImportValue firewall-publico
+      SubnetId: !ImportValue miRedPublica1
+      Tags:
+        - 
+          Key: "Name"
+          Value: "ec2Publico"
+
+  ec2Privado: 
+    Type: AWS::EC2::Instance
+    Properties: 
+      ImageId: 
+        !FindInMap [ltaAmis, !Ref "AWS::Region", amiec2]
+      KeyName: 
+        !Ref KeyPair
+      InstanceType: 
+        !Ref TipoInstancia
+      SecurityGroupIds:
+        - !ImportValue firewall-privado
+      SubnetId: !ImportValue miRedPrivada2
+      Tags:
+        - 
+          Key: "Name"
+          Value: "ec2Privado"
+
+Outputs:
+  ec2DnsPublico:
+    Description: DNS ec2
+    Value: 
+      !GetAtt ec2Publico.PublicDnsName
+
+  ec2DnsPrivado:
+    Description: DNS ec2
+    Value: 
+      !GetAtt ec2Privado.PrivateDnsName

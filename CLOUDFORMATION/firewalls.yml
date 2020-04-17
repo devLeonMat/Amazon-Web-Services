@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: "firewalls de la red"
+
+Resources:
+
+  sgPublico:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: firewall para conectar ec2 basica desde internet
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - 
+          Key: Name
+          Value: sgPublico
+      VpcId: !ImportValue infraestructura-idvpc
+
+  sgPrivado:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: firewall para conectar ec2 privadas desde las ec2 publicas
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref sgPublico
+      Tags:
+        - 
+          Key: Name
+          Value: sgPrivado
+      VpcId: !ImportValue infraestructura-idvpc
+
+  sgMysql:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: permite conexion solo a ec2 publicas y privadas
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref sgPublico
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref sgPrivado
+      Tags:
+        - 
+          Key: Name
+          Value: sgMysql
+      VpcId: !ImportValue infraestructura-idvpc
+
+Outputs:
+  sgPublico:
+    Description: firewall para ec2 publicas
+    Value: !Ref sgPublico
+    Export:
+      Name: firewall-publico
+
+  sgPrivado:
+    Description: firewall para ec2 privadas
+    Value: !Ref sgPrivado
+    Export:
+      Name: firewall-privado
+
+  sgMysql:
+    Description: firewall para mysql
+    Value: !Ref sgMysql
+    Export:
+      Name: firewall-mysql

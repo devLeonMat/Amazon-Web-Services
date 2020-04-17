@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: "ejemplo basico de ec2"
+
+Parameters:
+  KeyPair:
+    Description: ssh key para acceder a las ec2
+    Type: 'AWS::EC2::KeyPair::KeyName'
+  
+  typeInstance:
+    Description: tipo de ec2
+    Type: String
+    Default: t2.micro
+
+  idVPC:
+    Type: 'AWS::EC2::VPC::Id'
+
+
+Mappings:
+  ltaAmis:
+    us-east-1:
+      amiec2: ami-0080e4c5bc078760e
+    us-east-2:
+      amiec2: ami-02f706d959cedf892
+
+Resources:
+  
+  miEC2Basica: 
+    Type: AWS::EC2::Instance
+    Properties: 
+      ImageId: !FindInMap [ltaAmis, !Ref "AWS::Region", amiec2]
+      KeyName: !Ref KeyPair
+      InstanceType:  !Ref typeInstance
+      SecurityGroupIds:
+        - Ref: miFirewall
+      Tags:
+        - 
+          Key: "Name"
+          Value: "EC2-Demo"
+
+  miFirewall:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: firewall para conectar ec2 basica desde internet
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - 
+          Key: Name
+          Value: sgDemo
+      VpcId: !Ref idVPC
+
+Outputs:
+  sshConnectionIP:
+    Description: IP Publica de miEC2Basica
+    Value: 
+      !Join ['', [
+        "ssh -i ", 
+        !Ref KeyPair, 
+        ".pem ec2-user@", 
+        !GetAtt miEC2Basica.PublicIp ] 
+      ]
+
+  sshConnectionDNS:
+    Description: IP Publica de miEC2Basica
+    Value: 
+      !Join ['', [
+        "ssh -i ", 
+        !Ref KeyPair, 
+        ".pem ec2-user@", 
+        !GetAtt miEC2Basica.PublicDnsName ] 
+      ]
+
+  ec2DnsPublica:
+    Description: DNS ec2
+    Value: 
+      !GetAtt miEC2Basica.PublicDnsName
